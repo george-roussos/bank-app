@@ -111,17 +111,24 @@ const month = `${now.getMonth() + 1}`.padStart(2, 0);
 const year = now.getFullYear();
 labelDate.textContent = `${day}/${month}/${year}`;
 
-const displayMoves = function (movements, sort = false) {
-  const moves = sort ? movements.slice().sort((a, b) => a - b) : movements;
+const displayMoves = function (acc, sort = false) {
+  const moves = sort
+    ? acc.movements.slice().sort((a, b) => a - b)
+    : acc.movements;
   containerMovements.innerHTML = '';
   moves.forEach(function (movement, index) {
+    const date = new Date(acc.movementsDates[index]);
+    const day = `${date.getDate()}`.padStart(2, 0);
+    const month = `${date.getMonth() + 1}`.padStart(2, 0);
+    const year = date.getFullYear();
+    labelDate.textContent = `${day}/${month}/${year}`;
     const transactionType = movement < 0 ? 'withdrawal' : 'deposit';
     const html = `
     <div class="movements__row">
       <div class="movements__type movements__type--${transactionType}">${
       index + 1
     } ${transactionType}</div>
-        <div class="movements__date">3 days ago</div>
+        <div class="movements__date">${day}/${month}/${year}</div>
           <div class="movements__value">${movement} SEK</div>
     </div>`;
     containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -182,11 +189,11 @@ btnLogin.addEventListener('click', function (event) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
     labelWelcome.textContent = `${currentAccount.owner}`;
-    displayMoves(currentAccount.movements);
+    displayMoves(currentAccount);
     CalcDisplayBalance(currentAccount.movements);
     calcDisplaySummary(currentAccount);
     containerApp.style.opacity = 100;
-  } else console.log('wrong pin');
+  } else alert('Please enter correct PIN.');
 });
 
 btnTransfer.addEventListener('click', function (event) {
@@ -201,8 +208,12 @@ btnTransfer.addEventListener('click', function (event) {
       const transferAmount = Number(inputTransferAmount.value);
       transferTo.movements.push(transferAmount);
       currentAccount.movements.push(-Math.abs(transferAmount));
+      const now = new Date();
+      currentAccount.movementsDates.push(now.toISOString());
+      transferTo.movementsDates.push(now.toISOString());
+      console.log(now.toISOString());
       alert(`Transfer: ${transferAmount} SEK to ${transferTo.owner} succeeded`);
-      displayMoves(currentAccount.movements);
+      displayMoves(currentAccount);
       CalcDisplayBalance(currentAccount.movements);
       calcDisplaySummary(currentAccount);
     } else alert('Please enter a valid username');
@@ -213,8 +224,10 @@ btnLoan.addEventListener('click', function (event) {
   event.preventDefault();
   const loanAmount = Number(inputLoanAmount.value);
   currentAccount.movements.push(loanAmount);
+  const now = new Date();
+  currentAccount.movementsDates.push(now.toISOString());
   alert(`Loan request: ${loanAmount} SEK to ${currentAccount.owner} succeeded`);
-  displayMoves(currentAccount.movements);
+  displayMoves(currentAccount);
   CalcDisplayBalance(currentAccount.movements);
   calcDisplaySummary(currentAccount);
 });
@@ -244,7 +257,7 @@ let sortedMovements = false;
 
 btnSort.addEventListener('click', function (event) {
   event.preventDefault;
-  displayMoves(currentAccount.movements, !sortedMovements);
+  displayMoves(currentAccount, !sortedMovements);
   btnSort.blur();
   sortedMovements = !sortedMovements;
 });
